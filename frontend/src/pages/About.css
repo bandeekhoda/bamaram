@@ -1,0 +1,57 @@
+.about-page {
+  padding: 2rem 1rem;
+}
+
+.about-page h1 {
+  color: var(--dark-color);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.about-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.about-content p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.about-content h2 {
+  color: var(--primary-color);
+  margin: 2rem 0 1rem;
+  border-bottom: 2px solid var(--light-color);
+  padding-bottom: 0.5rem;
+}
+
+.tech-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.tech-item {
+  flex: 1;
+  min-width: 250px;
+}
+
+.tech-item h3 {
+  color: var(--dark-color);
+  margin-bottom: 1rem;
+}
+
+.tech-item ul, .feature-list {
+  padding-right: 1.5rem;
+}
+
+.tech-item li, .feature-list li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.feature-list li {
+  font-size: 1.05rem;
+} 

@@ -1,0 +1,145 @@
+.friend-detail-page {
+  padding: 2rem 1rem;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+  padding: 2rem;
+}
+
+.friend-detail-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.friend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+
+.friend-header h1 {
+  color: var(--primary-color);
+  margin: 0;
+  font-size: 2rem;
+}
+
+.birthday-badge {
+  background-color: #ff9800;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.friend-info-section {
+  margin-bottom: 2rem;
+}
+
+.info-item {
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #555;
+  width: 120px;
+}
+
+.info-value {
+  color: #333;
+  flex: 1;
+}
+
+.birthday-info {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #fff8e1;
+  border-radius: 8px;
+  border-right: 4px solid #ff9800;
+}
+
+.birthday-info h3 {
+  color: #ff9800;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.birthday-info p {
+  color: #555;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.btn-gift {
+  background-color: #e91e63;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-gift:hover {
+  background-color: #c2185b;
+}
+
+.friend-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.friend-actions .btn {
+  padding: 0.8rem 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .friend-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .friend-header h1 {
+    margin-bottom: 1rem;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .info-label {
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+  
+  .friend-actions {
+    flex-direction: column;
+  }
+  
+  .friend-actions .btn {
+    margin-bottom: 0.8rem;
+    width: 100%;
+    text-align: center;
+  }
+}

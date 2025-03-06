@@ -1,0 +1,10 @@
+---
+description: how to run backend
+globs: 
+alwaysApply: false
+---
+this backend project run with this batch file: backend\run_backend.bat
+
+after every change in backend run backend for test it (stop  or close prevouse proccess and  run a new run_backend.bat)
+
+never dont change run_backend.bat file!
