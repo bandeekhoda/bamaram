@@ -10,7 +10,7 @@ const Home = () => {
   return (
     <div className="home-page">
       <div className="hero-section">
-        <h1>به بامارام خوش آمدید</h1>
+        <h1>به بامرام خوش آمدید</h1>
         <p>یک پروژه با بک‌اند پایتون (FastAPI) و فرانت‌اند ری‌اکت</p>
         
         {isLoggedIn ? (
