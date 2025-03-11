@@ -65,6 +65,35 @@ const authService = {
   getCurrentUser: () => {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
+  },
+
+  // به‌روزرسانی اطلاعات کاربر در localStorage
+  updateUserData: (userData) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+  },
+
+  // آپلود عکس پروفایل
+  updateProfileImage: async (formData) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/users/profile-image`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
+  },
+
+  // حذف عکس پروفایل
+  removeProfileImage: async () => {
+    try {
+      const response = await axios.delete(`${API_URL}/api/users/profile-image`);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : error.message;
+    }
   }
 };
 

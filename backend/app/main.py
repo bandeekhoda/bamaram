@@ -11,7 +11,7 @@ otp.Base.metadata.create_all(bind=engine)
 friend_model.Base.metadata.create_all(bind=engine)
 gift_model.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="بامارام API")
+app = FastAPI(title="بامرام API")
 
 # تنظیمات CORS برای ارتباط با فرانت‌اند - اجازه به دامنه‌های مشخص
 app.add_middleware(
@@ -37,7 +37,7 @@ app.include_router(basalam.router)
 
 @app.get("/")
 async def root():
-    return {"message": "به API بامارام خوش آمدید!"}
+    return {"message": "به API بامرام خوش آمدید!"}
 
 
 @app.get("/api/health")

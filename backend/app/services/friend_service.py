@@ -2,9 +2,11 @@ from sqlalchemy.orm import Session
 from datetime import date, datetime
 import jdatetime
 from typing import List, Optional
+from fastapi import HTTPException
 
-from models.friend import Friend, Gender
-from schemas.friend import FriendCreate, FriendUpdate, FriendWithBirthdayStatus
+from models.friend import Friend
+from schemas.friend import FriendCreate, FriendUpdate, FriendWithBirthdayStatus, OccasionType
+from models.occasion import Occasion
 
 def get_friends(db: Session, user_id: int) -> List[Friend]:
     """دریافت لیست تمام دوستان یک کاربر"""
@@ -19,26 +21,60 @@ def create_friend(db: Session, friend: FriendCreate, user_id: int) -> Friend:
     db_friend = Friend(
         name=friend.name,
         birthdate=friend.birthdate,
-        gender=Gender[friend.gender.upper()],
+        relation=friend.relation,
         user_id=user_id
     )
+    
+    # اضافه کردن مناسبت تولد به صورت خودکار
+    birthday_occasion = Occasion(
+        friend=db_friend,
+        occasion_type=OccasionType.BIRTHDAY,
+        date=friend.birthdate
+    )
+    db.add(birthday_occasion)
+    
+    # اضافه کردن سایر مناسبت‌ها
+    if friend.occasionDates:
+        for occasion_date in friend.occasionDates:
+            # اگر مناسبت تولد نیست، آن را اضافه کن
+            if occasion_date.occasion != OccasionType.BIRTHDAY:
+                occasion = Occasion(
+                    friend=db_friend,
+                    occasion_type=occasion_date.occasion,
+                    date=occasion_date.date
+                )
+                db.add(occasion)
+    
     db.add(db_friend)
     db.commit()
     db.refresh(db_friend)
     return db_friend
 
-def update_friend(db: Session, friend_id: int, friend_update: FriendUpdate, user_id: int) -> Optional[Friend]:
-    """به‌روزرسانی اطلاعات یک دوست"""
+def update_friend(db: Session, friend_id: int, friend_update: FriendUpdate, user_id: int) -> Friend:
+    """به‌روزرسانی اطلاعات دوست"""
     db_friend = get_friend(db, friend_id, user_id)
     if not db_friend:
-        return None
+        raise HTTPException(status_code=404, detail="دوست مورد نظر یافت نشد")
     
+    # به‌روزرسانی اطلاعات اصلی
     update_data = friend_update.dict(exclude_unset=True)
-    if 'gender' in update_data and update_data['gender']:
-        update_data['gender'] = Gender[update_data['gender'].upper()]
-    
     for key, value in update_data.items():
-        setattr(db_friend, key, value)
+        if key != 'occasionDates':  # مناسبت‌ها را جداگانه به‌روز می‌کنیم
+            setattr(db_friend, key, value)
+    
+    # به‌روزرسانی مناسبت‌ها
+    if friend_update.occasionDates is not None:
+        # حذف مناسبت‌های قبلی
+        db.query(Occasion).filter(Occasion.friend_id == friend_id).delete()
+        
+        # اضافه کردن مناسبت‌های جدید
+        for occasion_date in friend_update.occasionDates:
+            occasion = Occasion(
+                friend=db_friend,
+                occasion_type=occasion_date.occasion,
+                date=occasion_date.date
+            )
+            db.add(occasion)
     
     db.commit()
     db.refresh(db_friend)
@@ -85,14 +121,24 @@ def get_friends_with_birthday_status(db: Session, user_id: int) -> List[FriendWi
         days_until_birthday = calculate_days_until_birthday(friend.birthdate)
         is_birthday_soon = days_until_birthday <= 7
         
+        # تبدیل مناسبت‌ها به فرمت مورد نیاز
+        occasion_dates = [
+            {
+                "occasion": occasion.occasion_type.value,
+                "date": occasion.date.isoformat()
+            }
+            for occasion in friend.occasions
+        ]
+        
         friend_with_status = FriendWithBirthdayStatus(
             id=friend.id,
             name=friend.name,
             birthdate=friend.birthdate,
-            gender=Gender(friend.gender).name.lower(),
+            relation=friend.relation,
             user_id=friend.user_id,
             days_until_birthday=days_until_birthday,
-            is_birthday_soon=is_birthday_soon
+            is_birthday_soon=is_birthday_soon,
+            occasionDates=occasion_dates
         )
         result.append(friend_with_status)
     

@@ -63,7 +63,7 @@ const FriendDetail = () => {
     return (
       <div className="friend-detail-page">
         <div className="alert alert-danger">{error}</div>
-        <Link to="/friends" className="btn btn-primary">بازگشت به لیست دوستان</Link>
+        <Link to="/friends" className="btn btn-primary">بازگشت به لیست محبوبان</Link>
       </div>
     );
   }
@@ -72,7 +72,7 @@ const FriendDetail = () => {
     return (
       <div className="friend-detail-page">
         <div className="alert alert-danger">دوست مورد نظر یافت نشد.</div>
-        <Link to="/friends" className="btn btn-primary">بازگشت به لیست دوستان</Link>
+        <Link to="/friends" className="btn btn-primary">بازگشت به لیست محبوبان</Link>
       </div>
     );
   }
@@ -118,7 +118,7 @@ const FriendDetail = () => {
         </div>
         
         <div className="friend-actions">
-          <Link to="/friends" className="btn btn-light">بازگشت به لیست دوستان</Link>
+          <Link to="/friends" className="btn btn-light">بازگشت به لیست محبوبان</Link>
           <Link to={`/friends/edit/${friend.id}`} className="btn btn-primary">ویرایش</Link>
           <button className="btn btn-danger" onClick={handleDelete}>حذف</button>
         </div>

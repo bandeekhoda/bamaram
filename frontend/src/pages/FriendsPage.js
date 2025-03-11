@@ -1,13 +1,13 @@
 import React from 'react';
-import FriendForm from '../components/FriendForm';
+import FriendList from '../components/FriendList';
 import { Container } from '@mui/material';
 
-const FriendEdit = () => {
+const FriendsPage = () => {
     return (
         <Container>
-            <FriendForm />
+            <FriendList />
         </Container>
     );
 };
 
-export default FriendEdit;
+export default FriendsPage; 

@@ -16,7 +16,7 @@ function FriendList() {
         setFriends(data);
         setLoading(false);
       } catch (err) {
-        setError('خطا در دریافت لیست دوستان');
+        setError('خطا در دریافت لیست محبوبان');
         setLoading(false);
         console.error(err);
       }
@@ -35,11 +35,11 @@ function FriendList() {
 
   return (
     <div className="friend-list-container">
-      <h1>لیست دوستان</h1>
+      <h1>لیست محبوبان</h1>
       <Link to="/" className="back-button">بازگشت به خانه</Link>
       
       <div className="add-friend">
-        <Link to="/friends/edit/new" className="add-friend-button">افزودن دوست جدید</Link>
+        <Link to="/friends/edit/new" className="add-friend-button">افزودن محبوب جدید</Link>
       </div>
       
       {friends.length === 0 ? (

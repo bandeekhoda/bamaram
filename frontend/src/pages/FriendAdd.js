@@ -2,7 +2,7 @@ import React from 'react';
 import FriendForm from '../components/FriendForm';
 import { Container } from '@mui/material';
 
-const FriendEdit = () => {
+const FriendAdd = () => {
     return (
         <Container>
             <FriendForm />
@@ -10,4 +10,4 @@ const FriendEdit = () => {
     );
 };
 
-export default FriendEdit;
+export default FriendAdd; 

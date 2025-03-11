@@ -89,7 +89,7 @@ function GiftSelect() {
   return (
     <div className="gift-select-container">
       <h1>انتخاب هدیه برای {friend?.name}</h1>
-      <Link to="/friends" className="back-button">بازگشت به لیست دوستان</Link>
+      <Link to="/friends" className="back-button">بازگشت به لیست محبوبان</Link>
       
       {message && <div className="message">{message}</div>}
       
