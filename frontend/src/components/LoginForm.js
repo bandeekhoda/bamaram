@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/api';
 import './LoginForm.css';
 
 const LoginForm = ({ onLoginSuccess }) => {
+  const { login } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [step, setStep] = useState(1); // 1: وارد کردن شماره موبایل، 2: وارد کردن کد OTP
@@ -53,10 +55,12 @@ const LoginForm = ({ onLoginSuccess }) => {
     setError('');
     
     try {
-      await authService.verifyOTP(phoneNumber, otpCode);
+      const response = await authService.verifyOTP(phoneNumber, otpCode);
       setMessage('ورود با موفقیت انجام شد!');
       
-      // فراخوانی تابع callback برای اطلاع‌رسانی به کامپوننت والد
+      // به‌روزرسانی وضعیت احراز هویت
+      await login(response.user);
+      
       if (onLoginSuccess) {
         onLoginSuccess();
       }

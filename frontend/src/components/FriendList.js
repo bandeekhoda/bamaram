@@ -15,7 +15,10 @@ import {
     Tooltip,
     Fade,
     keyframes,
-    Chip
+    Chip,
+    Container,
+    Divider,
+    Stack
 } from '@mui/material';
 import { 
     Delete as DeleteIcon, 
@@ -31,9 +34,11 @@ import {
     Celebration as PartyIcon,
     CardGiftcard as GiftIcon,
     LocalFlorist as FlowerIcon,
-    Email as EmailIcon
+    Email as EmailIcon,
+    Mail as MailIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import GiftSuggestionModal from './GiftSuggestionModal';
 
 // تعریف انیمیشن‌های چشمک‌زن
 const pulseAnimation = keyframes`
@@ -50,7 +55,8 @@ const fastPulseAnimation = keyframes`
 
 // تعریف نسبت‌ها و مناسبت‌ها (همان تعاریف FriendForm)
 const RELATIONS = {
-    PARENT: 'پدر/مادر',
+    PARENT_FATHER: 'پدر',
+    PARENT_MOTHER: 'مادر',
     CHILD: 'فرزند',
     SPOUSE: 'همسر',
     FRIEND: 'رفیق',
@@ -64,7 +70,8 @@ const OCCASIONS = {
     DAUGHTERS_DAY: 'روز دختر',
     SONS_DAY: 'روز پسر',
     WEDDING_ANNIVERSARY: 'سالگرد ازدواج',
-    ENGAGEMENT_ANNIVERSARY: 'سالگرد عقد'
+    ENGAGEMENT_ANNIVERSARY: 'سالگرد عقد',
+    STUDENTS_DAY: 'روز دانش‌آموز'
 };
 
 // تعریف آیکون‌ها برای هر مناسبت
@@ -93,7 +100,7 @@ const calculateAge = (birthdate) => {
 };
 
 // تابع محاسبه روزهای باقی‌مانده
-const calculateDaysUntil = (date) => {
+const calculateDaysUntil = (date, occasion) => {
     const today = new Date();
     const targetDate = new Date(date);
     
@@ -101,12 +108,14 @@ const calculateDaysUntil = (date) => {
     today.setHours(0, 0, 0, 0);
     targetDate.setHours(0, 0, 0, 0);
 
-    // تنظیم سال مناسبت برای سال جاری
-    targetDate.setFullYear(today.getFullYear());
-    
-    // اگر تاریخ امسال گذشته، به سال بعد تنظیم می‌شود
-    if (targetDate < today) {
-        targetDate.setFullYear(today.getFullYear() + 1);
+    // برای تولد و سالگردها، سال را به سال جاری یا سال بعد تنظیم می‌کنیم
+    if (occasion === 'BIRTHDAY' || 
+        occasion === 'WEDDING_ANNIVERSARY' || 
+        occasion === 'ENGAGEMENT_ANNIVERSARY') {
+        targetDate.setFullYear(today.getFullYear());
+        if (targetDate < today) {
+            targetDate.setFullYear(today.getFullYear() + 1);
+        }
     }
     
     // محاسبه تفاوت روزها
@@ -124,9 +133,9 @@ const isDateSoon = (daysUntil) => {
 const getOccasionStyle = (daysUntil) => {
     if (daysUntil === 0) {
         return {
-            bgcolor: '#ffebee', // قرمز روشن
-            border: '2px solid #f44336', // قرمز پررنگ
-            color: '#d32f2f', // قرمز تیره
+            bgcolor: '#ffebee',
+            border: '2px solid #f44336',
+            color: '#d32f2f',
             animation: `${fastPulseAnimation} 1s infinite`,
             '& .occasion-days': {
                 color: '#d32f2f',
@@ -140,51 +149,44 @@ const getOccasionStyle = (daysUntil) => {
         };
     } else if (daysUntil <= 3) {
         return {
-            bgcolor: '#fff5f5', // قرمز بسیار کمرنگ
-            border: '2px solid #ff8a80', // قرمز روشن
-            color: '#c62828', // قرمز تیره
+            bgcolor: '#fff5f5',
+            border: '2px solid #ff8a80',
+            color: '#e53935',
             animation: `${pulseAnimation} 2s infinite`,
             '& .occasion-days': {
-                color: '#c62828',
-                fontWeight: 'bold',
-                '&::after': {
-                    content: '"خیلی نزدیک!"',
-                    marginRight: '8px',
-                    color: '#c62828',
-                }
+                color: '#e53935',
+                fontWeight: 'bold'
             }
         };
-    } else if (daysUntil <= 10) {
+    } else if (daysUntil <= 7) {
         return {
-            bgcolor: '#fff3e0', // نارنجی کمرنگ
-            border: '2px solid #ff9800', // نارنجی پررنگ
-            color: '#e65100', // نارنجی تیره
+            bgcolor: '#fff8e1',
+            border: '2px solid #ffd54f',
+            color: '#f57f17',
             '& .occasion-days': {
-                color: '#e65100',
-                fontWeight: 'bold',
-                '&::after': {
-                    content: '"نزدیک"',
-                    marginRight: '8px',
-                    color: '#e65100',
-                }
+                color: '#f57f17',
+                fontWeight: 'bold'
             }
         };
     } else if (daysUntil <= 30) {
         return {
-            bgcolor: '#fffde7', // زرد ملایم
-            border: '2px solid #ffd54f', // زرد طلایی
-            color: '#f57f17', // نارنجی تیره
+            bgcolor: '#f5f5f5',
+            border: '2px solid #e0e0e0',
+            color: '#616161',
             '& .occasion-days': {
-                color: '#f57f17'
+                color: '#616161'
+            }
+        };
+    } else {
+        return {
+            bgcolor: '#ffffff',
+            border: '1px solid #eeeeee',
+            color: '#9e9e9e',
+            '& .occasion-days': {
+                color: '#9e9e9e'
             }
         };
     }
-
-    return {
-        bgcolor: '#f5f5f5',
-        border: '1px solid #e0e0e0',
-        color: '#757575'
-    };
 };
 
 const RELATION_AVATARS = {
@@ -198,6 +200,8 @@ const RELATION_AVATARS = {
 
 const FriendList = () => {
     const [friends, setFriends] = useState([]);
+    const [selectedFriend, setSelectedFriend] = useState(null);
+    const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -207,16 +211,18 @@ const FriendList = () => {
     const loadFriends = async () => {
         try {
             const data = await getFriends();
-            console.log('Friends data from server:', data);
+            console.log('Raw friends data:', data);
             
             // اضافه کردن روزهای باقی‌مانده برای هر مناسبت
             const friendsWithDates = data.map(friend => ({
                 ...friend,
-                occasionDates: friend.occasionDates.map(od => ({
-                    ...od,
-                    daysUntil: calculateDaysUntil(od.date),
-                    isDateSoon: isDateSoon(calculateDaysUntil(od.date))
-                }))
+                occasionDates: friend.occasionDates
+                    .map(od => ({
+                        ...od,
+                        daysUntil: calculateDaysUntil(od.date, od.occasion),
+                        isDateSoon: isDateSoon(calculateDaysUntil(od.date, od.occasion))
+                    }))
+                    .sort((a, b) => a.daysUntil - b.daysUntil) // مرتب‌سازی مناسبت‌ها بر اساس نزدیک‌ترین تاریخ
             }));
 
             // مرتب‌سازی محبوبان براساس نزدیک‌ترین مناسبت
@@ -226,7 +232,6 @@ const FriendList = () => {
                 return aMinDays - bMinDays;
             });
 
-            console.log('Sorted friends:', sortedFriends);
             setFriends(sortedFriends);
         } catch (error) {
             console.error('Error loading friends:', error);
@@ -262,138 +267,272 @@ const FriendList = () => {
         });
     };
 
-    return (
-        <Box sx={{ maxWidth: 1200, margin: '0 auto', p: 3 }}>
-            <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    mb: 4 
-                }}>
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-                        لیست محبوبان
-                    </Typography>
-                    <Button 
-                        variant="contained" 
-                        onClick={handleAdd}
-                        sx={{
-                            background: `linear-gradient(45deg, #fe663f 30%, #ff8568 90%)`,
-                            color: 'white',
-                            padding: '12px 32px',
-                            '&:hover': {
-                                background: `linear-gradient(45deg, #e55736 30%, #fe663f 90%)`,
-                                transform: 'translateY(-2px)',
-                                boxShadow: '0 8px 24px rgba(254, 102, 63, 0.3)'
-                            },
-                        }}
-                    >
-                        افزودن محبوب جدید
-                    </Button>
-                </Box>
+    const handleGiftClick = (friend) => {
+        setSelectedFriend(friend);
+        setIsGiftModalOpen(true);
+    };
 
-                <Grid container spacing={3} sx={{ display: 'flex', alignItems: 'stretch' }}>
-                    {friends.map((friend) => (
-                        <Grid 
-                            item 
-                            xs={12} 
-                            sm={6} 
-                            md={4} 
-                            key={friend.id}
-                            sx={{ display: 'flex', height: '100%' }}
+    const handlePostcardClick = () => {
+        window.open('https://digipostal.ir/', '_blank');
+    };
+
+    return (
+        <Box sx={{ 
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: '#f5f7fa',
+            p: 3
+        }}>
+            <Box
+                sx={{
+                    width: '1200px',
+                    minWidth: '1200px',
+                    margin: '0 auto'
+                }}
+            >
+                <Paper 
+                    elevation={3} 
+                    sx={{ 
+                        p: { xs: 2, md: 4 }, 
+                        mb: 4, 
+                        borderRadius: 3,
+                        background: 'linear-gradient(to bottom, #ffffff, #f8f9fa)',
+                        width: '100%'
+                    }}
+                >
+                    <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        justifyContent: 'space-between', 
+                        alignItems: { xs: 'stretch', sm: 'center' }, 
+                        gap: 2,
+                        mb: 4,
+                        width: '100%'
+                    }}>
+                        <Typography 
+                            variant="h4" 
+                            component="h1" 
+                            sx={{ 
+                                fontWeight: 'bold',
+                                color: '#2c3e50',
+                                textAlign: { xs: 'center', sm: 'right' }
+                            }}
                         >
+                            لیست محبوبان
+                        </Typography>
+                        <Button 
+                            variant="contained" 
+                            onClick={handleAdd}
+                            sx={{
+                                background: `linear-gradient(45deg, #fe663f 30%, #ff8568 90%)`,
+                                color: 'white',
+                                padding: '12px 32px',
+                                borderRadius: 2,
+                                boxShadow: '0 4px 12px rgba(254, 102, 63, 0.2)',
+                                '&:hover': {
+                                    background: `linear-gradient(45deg, #e55736 30%, #fe663f 90%)`,
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 8px 24px rgba(254, 102, 63, 0.3)'
+                                },
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            افزودن محبوب جدید
+                        </Button>
+                    </Box>
+
+                    <Box sx={{ 
+                        width: '100%',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: 3,
+                        '& > *': {
+                            minWidth: 0
+                        }
+                    }}>
+                        {friends.map((friend) => (
                             <Paper
+                                key={friend.id}
                                 elevation={2}
                                 sx={{
                                     width: '100%',
+                                    height: '500px',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    p: 2,
-                                    height: 400, // ارتفاع ثابت
-                                    position: 'relative',
-                                    borderRadius: 2,
-                                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                                    p: 2.5,
+                                    borderRadius: 3,
+                                    transition: 'all 0.3s ease',
                                     '&:hover': {
                                         transform: 'translateY(-4px)',
                                         boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
-                                    }
+                                    },
+                                    background: 'linear-gradient(to bottom, #ffffff, #fafafa)'
                                 }}
                             >
                                 {/* بخش اطلاعات اصلی */}
-                                <Box sx={{ mb: 2, flexShrink: 0 }}>
+                                <Box sx={{ 
+                                    mb: 2.5,
+                                    width: '100%'
+                                }}>
                                     <Box sx={{ 
                                         display: 'flex', 
                                         alignItems: 'flex-start',
-                                        gap: 2
+                                        gap: 2,
+                                        mb: 2,
+                                        width: '100%'
                                     }}>
                                         <Avatar 
                                             src={RELATION_AVATARS[friend.relation]}
                                             sx={{ 
-                                                width: 56, 
-                                                height: 56,
+                                                width: 64, 
+                                                height: 64,
                                                 bgcolor: friend.gender === 'male' ? '#029f68' : '#fe663f',
+                                                boxShadow: (() => {
+                                                    if (friend.occasionDates.some(od => od.daysUntil === 0)) {
+                                                        return '0 0 0 3px #f44336, 0 4px 12px rgba(0,0,0,0.1)';
+                                                    }
+                                                    if (friend.occasionDates.some(od => od.daysUntil <= 3)) {
+                                                        return '0 0 0 3px #ff8a80, 0 4px 12px rgba(0,0,0,0.1)';
+                                                    }
+                                                    if (friend.occasionDates.some(od => od.daysUntil <= 10)) {
+                                                        return '0 0 0 3px #ff9800, 0 4px 12px rgba(0,0,0,0.1)';
+                                                    }
+                                                    if (friend.occasionDates.some(od => od.daysUntil <= 30)) {
+                                                        return '0 0 0 3px #ffd54f, 0 4px 12px rgba(0,0,0,0.1)';
+                                                    }
+                                                    return '0 4px 12px rgba(0,0,0,0.1)';
+                                                })(),
+                                                animation: (() => {
+                                                    if (friend.occasionDates.some(od => od.daysUntil === 0)) {
+                                                        return `${pulseAnimation} 1s infinite`;
+                                                    }
+                                                    if (friend.occasionDates.some(od => od.daysUntil <= 3)) {
+                                                        return `${pulseAnimation} 2s infinite`;
+                                                    }
+                                                    return 'none';
+                                                })(),
+                                                transition: 'all 0.3s ease',
                                                 flexShrink: 0
                                             }}
                                         >
                                             {friend.name ? friend.name[0] : ''}
                                         </Avatar>
-                                        <Box sx={{ flex: 1 }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                                {friend.name}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                {RELATIONS[friend.relation]} • {calculateAge(friend.birthdate)} ساله
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                تاریخ تولد: {formatDate(friend.birthdate)}
+                                        <Box sx={{ 
+                                            flex: 1,
+                                            minWidth: 0 // برای جلوگیری از سرریز محتوا
+                                        }}>
+                                            <Box sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 1,
+                                                mb: 0.5
+                                            }}>
+                                                <Typography 
+                                                    variant="h6" 
+                                                    sx={{ 
+                                                        fontWeight: 'bold',
+                                                        color: '#2c3e50',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    {friend.name}
+                                                </Typography>
+                                                <Chip 
+                                                    label={RELATIONS[friend.relation]}
+                                                    size="small"
+                                                    sx={{ 
+                                                        bgcolor: friend.gender === 'male' ? 'rgba(2, 159, 104, 0.1)' : 'rgba(254, 102, 63, 0.1)',
+                                                        color: friend.gender === 'male' ? '#029f68' : '#fe663f',
+                                                        height: '20px'
+                                                    }}
+                                                />
+                                            </Box>
+                                            <Typography 
+                                                variant="body2" 
+                                                sx={{ 
+                                                    color: 'text.secondary',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                <CakeIcon sx={{ fontSize: 16, flexShrink: 0 }} />
+                                                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    {formatDate(friend.birthdate)} • {calculateAge(friend.birthdate)} ساله
+                                                </span>
                                             </Typography>
                                         </Box>
                                     </Box>
+                                    <Divider sx={{ my: 2 }} />
                                 </Box>
 
-                                {/* بخش مناسبت‌ها - با اسکرول */}
+                                {/* بخش مناسبت‌ها */}
                                 <Box 
                                     sx={{ 
                                         flex: 1,
                                         overflowY: 'auto',
                                         mb: 2,
+                                        width: '100%',
+                                        maxHeight: '350px',
                                         '&::-webkit-scrollbar': {
-                                            width: '6px',
+                                            width: '4px',
                                         },
                                         '&::-webkit-scrollbar-track': {
                                             background: '#f1f1f1',
                                             borderRadius: '10px',
                                         },
                                         '&::-webkit-scrollbar-thumb': {
-                                            background: '#888',
+                                            background: '#bbb',
                                             borderRadius: '10px',
                                         },
                                         '&::-webkit-scrollbar-thumb:hover': {
-                                            background: '#555',
+                                            background: '#999',
                                         },
                                     }}
                                 >
                                     {friend.occasionDates && friend.occasionDates.map((occasion, index) => {
-                                        const daysUntil = calculateDaysUntil(occasion.date);
+                                        const daysUntil = occasion.daysUntil;
                                         const occasionStyle = getOccasionStyle(daysUntil);
                                         
                                         return (
                                             <Box 
-                                                key={index}
+                                                key={`${occasion.occasion}-${index}`}
                                                 sx={{
-                                                    p: 1.5,
-                                                    mb: 1,
+                                                    p: 2,
+                                                    mb: 1.5,
                                                     borderRadius: 2,
-                                                    ...occasionStyle
+                                                    ...occasionStyle,
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: 1
                                                 }}
                                             >
-                                                <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    {React.createElement(OCCASION_ICONS[occasion.occasion] || CelebrationIcon, { 
-                                                        style: { marginLeft: 8, fontSize: 20 } 
-                                                    })}
-                                                    <span>{OCCASIONS[occasion.occasion]}</span>
-                                                    <span className="occasion-days" style={{ marginRight: 'auto' }}>
-                                                        {daysUntil > 0 ? `${daysUntil} روز مانده` : ''}
+                                                <Typography 
+                                                    variant="body2" 
+                                                    sx={{ 
+                                                        display: 'flex', 
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        fontWeight: 500,
+                                                        gap: 1
+                                                    }}
+                                                >
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        {React.createElement(OCCASION_ICONS[occasion.occasion] || CelebrationIcon, { 
+                                                            style: { fontSize: 20 } 
+                                                        })}
+                                                        <span>{OCCASIONS[occasion.occasion]}</span>
+                                                    </Box>
+                                                    <span className="occasion-days" style={{ fontSize: '0.85rem' }}>
+                                                        {daysUntil === 0 ? 'امروز!' : 
+                                                         daysUntil > 0 ? `${daysUntil} روز مانده` : ''}
                                                     </span>
                                                 </Typography>
                                                 {daysUntil <= 30 && (
@@ -401,16 +540,17 @@ const FriendList = () => {
                                                         display: 'flex', 
                                                         justifyContent: 'flex-end', 
                                                         gap: 1,
-                                                        mt: 1 
+                                                        mt: 1
                                                     }}>
                                                         <Button
                                                             variant="outlined"
                                                             size="small"
-                                                            onClick={() => navigate(`/gifts/${friend.id}/${occasion.occasion}`)}
+                                                            onClick={() => handleGiftClick(friend)}
                                                             startIcon={<GiftIcon />}
                                                             sx={{
                                                                 color: '#029f68',
                                                                 borderColor: '#029f68',
+                                                                borderRadius: 1.5,
                                                                 '&:hover': { 
                                                                     bgcolor: 'rgba(2, 159, 104, 0.1)',
                                                                     borderColor: '#029f68',
@@ -425,14 +565,15 @@ const FriendList = () => {
                                                         <Button
                                                             variant="outlined"
                                                             size="small"
-                                                            onClick={() => navigate(`/postcards/${friend.id}/${occasion.occasion}`)}
+                                                            onClick={handlePostcardClick}
                                                             startIcon={<EmailIcon />}
                                                             sx={{
-                                                                color: '#fe663f',
-                                                                borderColor: '#fe663f',
+                                                                color: '#3b82f6',
+                                                                borderColor: '#3b82f6',
+                                                                borderRadius: 1.5,
                                                                 '&:hover': { 
-                                                                    bgcolor: 'rgba(254, 102, 63, 0.1)',
-                                                                    borderColor: '#fe663f',
+                                                                    bgcolor: 'rgba(59, 130, 246, 0.1)',
+                                                                    borderColor: '#3b82f6',
                                                                     transform: 'translateY(-2px)'
                                                                 },
                                                                 transition: 'all 0.2s ease',
@@ -455,14 +596,18 @@ const FriendList = () => {
                                     gap: 1,
                                     pt: 2,
                                     borderTop: '1px solid rgba(0,0,0,0.1)',
-                                    flexShrink: 0
+                                    width: '100%'
                                 }}>
                                     <Tooltip title="ویرایش" arrow TransitionComponent={Fade}>
                                         <IconButton 
                                             onClick={() => handleEdit(friend.id)}
                                             sx={{ 
                                                 color: '#029f68',
-                                                '&:hover': { bgcolor: 'rgba(2, 159, 104, 0.1)' }
+                                                '&:hover': { 
+                                                    bgcolor: 'rgba(2, 159, 104, 0.1)',
+                                                    transform: 'translateY(-2px)'
+                                                },
+                                                transition: 'all 0.2s ease'
                                             }}
                                         >
                                             <EditIcon />
@@ -473,7 +618,11 @@ const FriendList = () => {
                                             onClick={() => handleDelete(friend.id)}
                                             sx={{ 
                                                 color: '#fe663f',
-                                                '&:hover': { bgcolor: 'rgba(254, 102, 63, 0.1)' }
+                                                '&:hover': { 
+                                                    bgcolor: 'rgba(254, 102, 63, 0.1)',
+                                                    transform: 'translateY(-2px)'
+                                                },
+                                                transition: 'all 0.2s ease'
                                             }}
                                         >
                                             <DeleteIcon />
@@ -481,10 +630,20 @@ const FriendList = () => {
                                     </Tooltip>
                                 </Box>
                             </Paper>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Paper>
+                        ))}
+                        {/* اضافه کردن المان‌های خالی برای حفظ گرید در صورت کم بودن تعداد کارت‌ها */}
+                        {[...Array(Math.max(0, 3 - (friends.length % 3 || 3)))].map((_, index) => (
+                            <Box key={`empty-${index}`} sx={{ height: 0 }} />
+                        ))}
+                    </Box>
+                </Paper>
+            </Box>
+
+            <GiftSuggestionModal
+                open={isGiftModalOpen}
+                onClose={() => setIsGiftModalOpen(false)}
+                friend={selectedFriend}
+            />
         </Box>
     );
 };

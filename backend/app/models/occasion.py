@@ -11,6 +11,7 @@ class OccasionType(PyEnum):
     SONS_DAY = "SONS_DAY"
     WEDDING_ANNIVERSARY = "WEDDING_ANNIVERSARY"
     ENGAGEMENT_ANNIVERSARY = "ENGAGEMENT_ANNIVERSARY"
+    STUDENTS_DAY = "STUDENTS_DAY"
 
 class Occasion(Base):
     __tablename__ = "occasions"

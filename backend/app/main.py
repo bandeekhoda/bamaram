@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
-from routers import users, auth, friend, gift, basalam
+from routers import users, auth, friend, gift, basalam, auction
 from database.database import engine
 from models import user, otp, friend as friend_model, gift as gift_model
 
@@ -13,18 +14,19 @@ gift_model.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="بامرام API")
 
-# تنظیمات CORS برای ارتباط با فرانت‌اند - اجازه به دامنه‌های مشخص
+# تنظیمات CORS برای ارتباط با فرانت‌اند
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # پورت پیش‌فرض React
-        "http://localhost:3001",  # پورت دیگر برای تست
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # اضافه کردن روترها
@@ -33,6 +35,7 @@ app.include_router(auth.router)
 app.include_router(friend.router)
 app.include_router(gift.router)
 app.include_router(basalam.router)
+app.include_router(auction.router)
 
 
 @app.get("/")

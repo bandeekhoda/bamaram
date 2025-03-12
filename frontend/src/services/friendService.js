@@ -1,15 +1,21 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'http://localhost:8000/api/friends';
 
 // تنظیم پیکربندی پیش‌فرض axios
-axios.defaults.headers.common['Content-Type'] = 'application/json';
+const axiosInstance = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    withCredentials: false
+});
 
 // تابع کمکی برای تنظیم توکن
 const setAuthHeader = () => {
     const token = localStorage.getItem('token');
     if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         return true;
     }
     return false;
@@ -17,7 +23,9 @@ const setAuthHeader = () => {
 
 // تابع کمکی برای مدیریت خطاها
 const handleError = (error) => {
+    console.error('API Error:', error);
     if (error.response) {
+        console.error('Response Error:', error.response.data);
         if (error.response.status === 401) {
             // خطای عدم احراز هویت - هدایت به صفحه لاگین
             window.location.href = '/login';
@@ -25,8 +33,10 @@ const handleError = (error) => {
         }
         throw error;
     } else if (error.request) {
+        console.error('Request Error:', error.request);
         throw new Error('خطا در ارتباط با سرور. لطفاً از اتصال اینترنت خود مطمئن شوید.');
     } else {
+        console.error('Error:', error.message);
         throw new Error('خطای غیرمنتظره رخ داده است.');
     }
 };
@@ -36,12 +46,13 @@ export const getFriends = async () => {
         if (!setAuthHeader()) {
             throw new Error('لطفاً وارد حساب کاربری خود شوید');
         }
-        const response = await axios.get(`${API_URL}/friends/`);
-        console.log('API Response:', response.data);
+        console.log('Fetching friends...');
+        const response = await axiosInstance.get('/');
+        console.log('Friends fetched successfully:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error fetching friends:', error);
-        handleError(error);
+        throw handleError(error);
     }
 };
 
@@ -50,7 +61,7 @@ export const getFriend = async (id) => {
         if (!setAuthHeader()) {
             throw new Error('لطفاً وارد حساب کاربری خود شوید');
         }
-        const response = await axios.get(`${API_URL}/friends/${id}/`);
+        const response = await axiosInstance.get(`/${id}/`);
         return response.data;
     } catch (error) {
         handleError(error);
@@ -78,7 +89,7 @@ export const createFriend = async (friendData) => {
 
         console.log('Formatted data being sent:', formattedData);
         
-        const response = await axios.post(`${API_URL}/friends/`, formattedData);
+        const response = await axiosInstance.post('/', formattedData);
         return response.data;
     } catch (error) {
         handleError(error);
@@ -102,7 +113,7 @@ export const updateFriend = async (id, friendData) => {
             }))
         };
 
-        const response = await axios.put(`${API_URL}/friends/${id}/`, formattedData);
+        const response = await axiosInstance.put(`/${id}/`, formattedData);
         return response.data;
     } catch (error) {
         handleError(error);
@@ -114,9 +125,9 @@ export const deleteFriend = async (id) => {
         if (!setAuthHeader()) {
             throw new Error('لطفاً وارد حساب کاربری خود شوید');
         }
-        const response = await axios.delete(`${API_URL}/friends/${id}/`);
+        const response = await axiosInstance.delete(`/${id}/`);
         return response.data;
     } catch (error) {
         handleError(error);
     }
-}; 
+};

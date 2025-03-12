@@ -1,22 +1,21 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
-import { authService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // اگر کاربر قبلاً لاگین کرده باشد، به صفحه اصلی هدایت می‌شود
-    if (authService.isLoggedIn()) {
-      navigate('/');
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleLoginSuccess = () => {
-    // پس از لاگین موفق، به صفحه اصلی هدایت می‌شود
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   return (

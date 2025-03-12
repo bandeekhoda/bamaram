@@ -47,35 +47,12 @@ const OCCASIONS = {
 
 // تعریف مناسبت‌های مجاز برای هر نسبت
 const ALLOWED_OCCASIONS = {
-    PARENT_MOTHER: [
-        'MOTHERS_DAY'
-    ],
-    PARENT_FATHER: [
-        'FATHERS_DAY'
-    ],
-    SPOUSE: (gender) => gender === 'male' ? [
-        'MENS_DAY',
-        'WEDDING_ANNIVERSARY',
-        'ENGAGEMENT_ANNIVERSARY'
-    ] : [
-        'WEDDING_ANNIVERSARY',
-        'ENGAGEMENT_ANNIVERSARY'
-    ],
-    CHILD: (gender) => gender === 'female' ? [
-        'DAUGHTERS_DAY',
-        'STUDENTS_DAY'
-    ] : [
-        'SONS_DAY',
-        'STUDENTS_DAY'
-    ],
-    FRIEND: [],
-    RELATIVE: []
-};
-
-// تعریف جنسیت پیش‌فرض برای نسبت‌ها
-const DEFAULT_GENDER = {
-    PARENT_MOTHER: 'female',
-    PARENT_FATHER: 'male'
+    PARENT_MOTHER: ['BIRTHDAY', 'MOTHERS_DAY'],
+    PARENT_FATHER: ['BIRTHDAY', 'FATHERS_DAY'],
+    SPOUSE: ['BIRTHDAY', 'WEDDING_ANNIVERSARY', 'ENGAGEMENT_ANNIVERSARY'],
+    CHILD: ['BIRTHDAY', 'STUDENTS_DAY'],
+    FRIEND: ['BIRTHDAY'],
+    RELATIVE: ['BIRTHDAY']
 };
 
 const FriendForm = () => {
@@ -88,51 +65,48 @@ const FriendForm = () => {
         relation: '',
         birthdate: '',
     });
-    const [occasionDates, setOccasionDates] = useState([{ occasion: '', date: '' }]);
-    const [age, setAge] = useState(null);
+    const [occasionDates, setOccasionDates] = useState([]);
 
     useEffect(() => {
         if (id && id !== 'new') {
             loadFriend();
+        } else {
+            // برای دوست جدید، تولد را به عنوان مناسبت پیش‌فرض اضافه می‌کنیم
+            setOccasionDates([{ 
+                occasion: 'BIRTHDAY', 
+                date: formData.birthdate || '' 
+            }]);
         }
     }, [id]);
 
-    // محاسبه سن بر اساس تاریخ تولد
-    const calculateAge = (birthdate) => {
-        if (!birthdate) return null;
-        const today = new Date();
-        const birthDate = new Date(birthdate);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    };
-
-    // به روزرسانی سن هنگام تغییر تاریخ تولد
+    // همگام‌سازی تاریخ تولد با مناسبت تولد
     useEffect(() => {
         if (formData.birthdate) {
-            setAge(calculateAge(formData.birthdate));
+            setOccasionDates(prev => prev.map(od => 
+                od.occasion === 'BIRTHDAY' ? { ...od, date: formData.birthdate } : od
+            ));
         }
     }, [formData.birthdate]);
 
     const loadFriend = async () => {
         try {
+            setLoading(true);
             const friend = await getFriend(id);
             setFormData({
                 name: friend.name,
                 relation: friend.relation,
                 birthdate: friend.birthdate,
             });
-            setOccasionDates(friend.occasionDates || [{ occasion: '', date: '' }]);
-            if (friend.birthdate) {
-                setAge(calculateAge(friend.birthdate));
+            // اطمینان از وجود مناسبت تولد
+            const occasions = friend.occasionDates || [];
+            if (!occasions.some(od => od.occasion === 'BIRTHDAY')) {
+                occasions.unshift({ occasion: 'BIRTHDAY', date: friend.birthdate });
             }
-        } catch (err) {
+            setOccasionDates(occasions);
+        } catch (error) {
             setError('خطا در بارگذاری اطلاعات دوست');
-            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -142,97 +116,134 @@ const FriendForm = () => {
             ...prev,
             [name]: value
         }));
-        
-        // پاک کردن مناسبت‌های قبلی در صورت تغییر نسبت
-        if (name === 'relation') {
-            setOccasionDates([{ occasion: '', date: '' }]);
-        }
-        
-        setError('');
-    };
 
-    const handleOccasionAdd = () => {
-        setOccasionDates(prev => [...prev, { occasion: '', date: '' }]);
+        // اگر نسبت تغییر کرد، مناسبت‌ها را بروز می‌کنیم
+        if (name === 'relation') {
+            const allowedOccasions = ALLOWED_OCCASIONS[value] || [];
+            console.log('Allowed occasions for relation:', value, ':', allowedOccasions);
+            
+            // حفظ مناسبت تولد
+            const birthdayOccasion = occasionDates.find(od => od.occasion === 'BIRTHDAY');
+            
+            // ایجاد مناسبت‌های جدید با تاریخ خالی
+            const newOccasions = allowedOccasions
+                .filter(occasion => occasion !== 'BIRTHDAY')
+                .map(occasion => ({ occasion, date: '' }));
+            
+            // ترکیب مناسبت تولد با مناسبت‌های جدید
+            setOccasionDates([birthdayOccasion, ...newOccasions]);
+        }
+
+        // اگر تاریخ تولد تغییر کرد، تاریخ مناسبت تولد را بروز می‌کنیم
+        if (name === 'birthdate') {
+            setOccasionDates(prev => prev.map(od => 
+                od.occasion === 'BIRTHDAY' ? { ...od, date: value } : od
+            ));
+        }
     };
 
     const handleOccasionChange = (index, field, value) => {
-        setOccasionDates(prev => {
-            const newDates = [...prev];
-            newDates[index] = {
-                ...newDates[index],
-                [field]: value
-            };
-            return newDates;
-        });
+        const newOccasionDates = [...occasionDates];
+        newOccasionDates[index] = {
+            ...newOccasionDates[index],
+            [field]: value
+        };
+        setOccasionDates(newOccasionDates);
     };
 
-    const handleOccasionRemove = (index) => {
-        setOccasionDates(prev => prev.filter((_, i) => i !== index));
+    const addOccasion = () => {
+        // حذف مناسبت‌های خالی قبلی
+        const filteredOccasions = occasionDates.filter(od => 
+            (od.occasion && od.date) || od.occasion === 'BIRTHDAY'
+        );
+        // افزودن مناسبت جدید
+        setOccasionDates([...filteredOccasions, { occasion: '', date: '' }]);
     };
 
-    // دریافت لیست مناسبت‌های مجاز برای نسبت
-    const getAllowedOccasions = () => {
-        if (!formData.relation) return [];
-        const occasions = ALLOWED_OCCASIONS[formData.relation];
-        // چون جنسیت رو حذف کردیم، فقط مناسبت‌های ثابت رو برمی‌گردونیم
-        return Array.isArray(occasions) ? occasions : occasions('male');
-    };
-
-    const validateName = (name) => {
-        if (!name) return 'نام دوست الزامی است';
-        if (name.length < 2) return 'نام باید حداقل 2 حرف باشد';
-        if (name.length > 50) return 'نام نباید بیشتر از 50 حرف باشد';
-        if (!/^[\u0600-\u06FF\s]+$/.test(name)) return 'لطفاً نام را به فارسی وارد کنید';
-        return '';
-    };
-
-    const validateDate = (date) => {
-        if (!date) return 'تاریخ الزامی است';
-        
-        const regex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!regex.test(date)) return 'فرمت تاریخ باید YYYY-MM-DD باشد';
-        
-        const d = new Date(date);
-        if (isNaN(d.getTime())) return 'تاریخ وارد شده معتبر نیست';
-        
-        if (d > new Date()) return 'تاریخ نمی‌تواند در آینده باشد';
-
-        const minDate = new Date();
-        minDate.setFullYear(minDate.getFullYear() - 150);
-        if (d < minDate) return 'تاریخ خیلی قدیمی است';
-        
-        return '';
+    const removeOccasion = (index) => {
+        // حذف مناسبت به جز مناسبت تولد
+        if (occasionDates[index].occasion !== 'BIRTHDAY') {
+            const newOccasionDates = occasionDates.filter((_, i) => i !== index);
+            setOccasionDates(newOccasionDates);
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // اعتبارسنجی فرم
-        const nameError = validateName(formData.name);
-        if (nameError) {
-            setError(nameError);
-            return;
-        }
-
-        // اضافه کردن تولد به عنوان مناسبت پیش‌فرض
-        let updatedOccasionDates = [...occasionDates];
-        const hasBirthday = updatedOccasionDates.some(od => od.occasion === 'BIRTHDAY');
-        if (!hasBirthday && formData.birthdate) {
-            updatedOccasionDates.push({
-                occasion: 'BIRTHDAY',
-                date: formData.birthdate
-            });
-        }
+        setError('');
 
         try {
-            setLoading(true);
-            setError('');
-            
+            // اعتبارسنجی نام
+            const nameRegex = /^[\u0600-\u06FF\s]+$/;
+            if (!nameRegex.test(formData.name)) {
+                setError('لطفاً نام را فقط با حروف فارسی وارد کنید');
+                return;
+            }
+
+            // اعتبارسنجی تاریخ تولد
+            const birthdate = new Date(formData.birthdate);
+            if (isNaN(birthdate.getTime())) {
+                setError('تاریخ تولد معتبر نیست');
+                return;
+            }
+
+            // اعتبارسنجی و پاکسازی مناسبت‌ها
+            const validOccasions = occasionDates
+                .filter(od => {
+                    // حفظ مناسبت تولد و مناسبت‌های کامل
+                    const isValid = od.occasion === 'BIRTHDAY' || (od.occasion && od.date);
+                    if (!isValid) {
+                        console.log('Filtering out incomplete occasion:', od);
+                    }
+                    return isValid;
+                })
+                .filter(od => {
+                    // بررسی مجاز بودن مناسبت برای نسبت انتخاب شده
+                    const allowedOccasions = ALLOWED_OCCASIONS[formData.relation] || [];
+                    const isAllowed = od.occasion === 'BIRTHDAY' || allowedOccasions.includes(od.occasion);
+                    if (!isAllowed) {
+                        console.log('Filtering out invalid occasion for relation:', od, 'Allowed occasions:', allowedOccasions);
+                    }
+                    return isAllowed;
+                })
+                // حذف مناسبت‌های تکراری
+                .reduce((acc, current) => {
+                    const isDuplicate = acc.some(item => item.occasion === current.occasion);
+                    if (!isDuplicate) {
+                        acc.push(current);
+                    } else {
+                        console.log('Removing duplicate occasion:', current);
+                    }
+                    return acc;
+                }, [])
+                .map(od => {
+                    const formattedDate = new Date(od.date).toISOString().split('T')[0];
+                    console.log('Formatting occasion date:', od.date, 'to:', formattedDate);
+                    return {
+                        occasion: od.occasion,
+                        date: formattedDate
+                    };
+                });
+
+            // بررسی وجود مناسبت تولد
+            const hasBirthday = validOccasions.some(od => od.occasion === 'BIRTHDAY');
+            if (!hasBirthday) {
+                validOccasions.push({
+                    occasion: 'BIRTHDAY',
+                    date: formData.birthdate
+                });
+            }
+
             const friendData = {
-                ...formData,
-                occasionDates: updatedOccasionDates
+                name: formData.name.trim(),
+                relation: formData.relation,
+                birthdate: formData.birthdate,
+                occasionDates: validOccasions
             };
 
+            console.log('Final data being sent:', JSON.stringify(friendData, null, 2));
+
+            setLoading(true);
             if (id && id !== 'new') {
                 await updateFriend(id, friendData);
             } else {
@@ -242,31 +253,30 @@ const FriendForm = () => {
             navigate('/friends');
         } catch (error) {
             console.error('Error submitting form:', error);
-            
-            if (error.response?.status === 400) {
-                // خطای اعتبارسنجی سرور
-                const serverError = error.response.data;
-                if (serverError.detail) {
-                    if (serverError.detail.includes('name')) {
-                        setError('نام وارد شده معتبر نیست. لطفاً نام را به فارسی وارد کنید');
-                    } else if (serverError.detail.includes('relation')) {
-                        setError('نسبت انتخاب شده معتبر نیست');
-                    } else if (serverError.detail.includes('occasion')) {
-                        setError('مناسبت انتخاب شده با نسبت همخوانی ندارد');
-                    } else if (serverError.detail.includes('date')) {
-                        setError('تاریخ وارد شده معتبر نیست');
-                    } else {
-                        setError(serverError.detail);
-                    }
+            if (error.response?.status === 422) {
+                const errorDetails = error.response?.data;
+                console.log('Server validation error details:', JSON.stringify(errorDetails, null, 2));
+                
+                if (Array.isArray(errorDetails?.detail)) {
+                    // اگر آرایه‌ای از خطاها در detail دریافت کردیم
+                    const errorMessages = errorDetails.detail.map(err => {
+                        if (typeof err === 'string') return err;
+                        if (err.msg) return err.msg;
+                        return JSON.stringify(err);
+                    });
+                    setError(errorMessages.join('، '));
+                } else if (typeof errorDetails?.detail === 'string') {
+                    // اگر detail یک رشته ساده بود
+                    setError(errorDetails.detail);
+                } else if (typeof errorDetails === 'string') {
+                    // اگر کل پیام خطا یک رشته بود
+                    setError(errorDetails);
                 } else {
-                    setError('لطفاً اطلاعات وارد شده را بررسی کنید');
+                    setError('لطفاً همه فیلدها را به درستی پر کنید');
+                    console.log('Unknown error format:', errorDetails);
                 }
-            } else if (error.response?.status === 409) {
-                setError('این دوست قبلاً در لیست شما ثبت شده است');
-            } else if (error.message === 'Network Error') {
-                setError('خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید');
             } else {
-                setError('متأسفانه مشکلی در ثبت اطلاعات پیش آمده. لطفاً دوباره تلاش کنید');
+                setError('خطا در ذخیره‌سازی اطلاعات');
             }
         } finally {
             setLoading(false);
@@ -274,196 +284,137 @@ const FriendForm = () => {
     };
 
     return (
-        <Box sx={{ maxWidth: 600, margin: '0 auto', p: 3 }}>
-            <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                    <IconButton 
-                        onClick={() => navigate('/friends')}
-                        sx={{ mr: 2 }}
-                    >
-                        <ArrowBackIcon />
-                    </IconButton>
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-                        {id ? 'ویرایش محبوب' : 'افزودن محبوب جدید'}
-                    </Typography>
-                </Box>
+        <Box component={Paper} sx={{ p: 3, maxWidth: 600, mx: 'auto', mt: 4 }}>
+            <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                <IconButton onClick={() => navigate('/friends')} sx={{ mr: 1 }}>
+                    <ArrowBackIcon />
+                </IconButton>
+                <Typography variant="h5" component="h1">
+                    {id && id !== 'new' ? 'ویرایش دوست' : 'افزودن دوست جدید'}
+                </Typography>
+            </Box>
 
-                {error && (
-                    <Paper 
-                        elevation={0} 
-                        sx={{ 
-                            bgcolor: 'error.light',
-                            color: 'error.main',
-                            p: 2,
-                            mb: 3,
-                            borderRadius: 1
-                        }}
-                    >
-                        <Typography>{error}</Typography>
-                    </Paper>
-                )}
+            {error && (
+                <Typography color="error" sx={{ mb: 2 }}>
+                    {typeof error === 'string' ? error : 'خطا در ثبت اطلاعات'}
+                </Typography>
+            )}
 
-                <Box component="form" onSubmit={handleSubmit}>
-                    <TextField
-                        fullWidth
-                        label="نام محبوب"
-                        name="name"
-                        value={formData.name}
+            <form onSubmit={handleSubmit}>
+                <TextField
+                    fullWidth
+                    label="نام"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    margin="normal"
+                    required
+                    disabled={loading}
+                />
+
+                <FormControl fullWidth margin="normal" required>
+                    <InputLabel>نسبت</InputLabel>
+                    <Select
+                        name="relation"
+                        value={formData.relation}
                         onChange={handleChange}
-                        required
-                        error={!!error && error.includes('نام')}
-                        helperText={error && error.includes('نام') ? error : ''}
-                        sx={{ mb: 2 }}
-                    />
-
-                    <TextField
-                        fullWidth
-                        label="تاریخ تولد"
-                        type="date"
-                        name="birthdate"
-                        value={formData.birthdate}
-                        onChange={handleChange}
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                        inputProps={{
-                            max: new Date().toISOString().split('T')[0] // محدود کردن به امروز
-                        }}
-                        required
-                        error={!!error && error.includes('تاریخ')}
-                        helperText={age !== null ? `سن: ${age} سال` : ''}
-                        sx={{ mb: 2 }}
-                    />
-
-                    <FormControl fullWidth sx={{ mb: 3 }}>
-                        <InputLabel sx={{ background: 'white', px: 1 }}>نسبت</InputLabel>
-                        <Select
-                            name="relation"
-                            value={formData.relation}
-                            onChange={handleChange}
-                            required
-                            sx={{ borderRadius: 2 }}
-                        >
-                            {Object.entries(RELATIONS).map(([key, value]) => (
-                                <MenuItem key={key} value={key}>{value}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    <Box sx={{ mb: 3 }}>
-                        <Typography variant="subtitle1" sx={{ mb: 2 }}>مناسبت‌ها و تاریخ‌ها (اختیاری)</Typography>
-                        
-                        {occasionDates.map((item, index) => (
-                            <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'flex-start' }}>
-                                <FormControl sx={{ flex: 1 }}>
-                                    <InputLabel sx={{ background: 'white', px: 1 }}>مناسبت</InputLabel>
-                                    <Select
-                                        value={item.occasion}
-                                        onChange={(e) => handleOccasionChange(index, 'occasion', e.target.value)}
-                                        required={false}
-                                        sx={{ borderRadius: 2 }}
-                                    >
-                                        {getAllowedOccasions().map(occasionKey => (
-                                            <MenuItem key={occasionKey} value={occasionKey}>
-                                                {OCCASIONS[occasionKey]}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-
-                                <TextField
-                                    type="date"
-                                    value={item.date}
-                                    onChange={(e) => handleOccasionChange(index, 'date', e.target.value)}
-                                    required={false}
-                                    sx={{ flex: 1 }}
-                                    InputProps={{
-                                        sx: { borderRadius: 2 }
-                                    }}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                        sx: { 
-                                            background: 'white',
-                                            px: 1
-                                        }
-                                    }}
-                                />
-
-                                <IconButton 
-                                    onClick={() => handleOccasionRemove(index)}
-                                    sx={{ 
-                                        color: '#fe663f',
-                                        '&:hover': { bgcolor: 'rgba(254, 102, 63, 0.1)' }
-                                    }}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            </Box>
+                        disabled={loading}
+                    >
+                        {Object.entries(RELATIONS).map(([key, value]) => (
+                            <MenuItem key={key} value={key}>{value}</MenuItem>
                         ))}
-                        
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            تولد به صورت خودکار برای همه ثبت می‌شود. سایر مناسبت‌ها را در صورت نیاز اضافه کنید.
-                        </Typography>
+                    </Select>
+                </FormControl>
 
-                        <Button
-                            variant="outlined"
-                            onClick={handleOccasionAdd}
-                            startIcon={<AddIcon />}
-                            sx={{
-                                borderColor: '#fe663f',
-                                color: '#fe663f',
-                                '&:hover': {
-                                    borderColor: '#e55736',
-                                    color: '#e55736',
-                                    bgcolor: 'rgba(254, 102, 63, 0.05)'
-                                }
-                            }}
-                        >
-                            افزودن مناسبت جدید
-                        </Button>
-                    </Box>
+                <TextField
+                    fullWidth
+                    label="تاریخ تولد"
+                    name="birthdate"
+                    type="date"
+                    value={formData.birthdate}
+                    onChange={handleChange}
+                    margin="normal"
+                    required
+                    disabled={loading}
+                    InputLabelProps={{ shrink: true }}
+                />
 
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            fullWidth
-                            disabled={loading}
-                            sx={{
-                                background: `linear-gradient(45deg, #fe663f 30%, #ff8568 90%)`,
-                                color: 'white',
-                                padding: '12px',
-                                '&:hover': {
-                                    background: `linear-gradient(45deg, #e55736 30%, #fe663f 90%)`,
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: '0 8px 24px rgba(254, 102, 63, 0.3)'
-                                },
-                                boxShadow: '0 4px 16px rgba(254, 102, 63, 0.2)',
-                                transition: 'all 0.3s ease'
-                            }}
-                        >
-                            {loading ? 'در حال ذخیره...' : (id ? 'به‌روزرسانی' : 'افزودن')}
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            fullWidth
-                            onClick={() => navigate('/friends')}
-                            disabled={loading}
-                            sx={{
-                                borderColor: '#fe663f',
-                                color: '#fe663f',
-                                '&:hover': {
-                                    borderColor: '#e55736',
-                                    color: '#e55736',
-                                    bgcolor: 'rgba(254, 102, 63, 0.05)'
+                <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+                    مناسبت‌ها
+                </Typography>
+
+                {occasionDates.map((od, index) => (
+                    <Box key={index} sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <FormControl sx={{ flex: 1 }}>
+                            <InputLabel>مناسبت</InputLabel>
+                            <Select
+                                value={od.occasion}
+                                onChange={(e) => handleOccasionChange(index, 'occasion', e.target.value)}
+                                disabled={loading || (od.occasion === 'BIRTHDAY' && index === 0)}
+                            >
+                                {Object.entries(OCCASIONS)
+                                    .filter(([key]) => {
+                                        if (!formData.relation) return true;
+                                        if (key === 'BIRTHDAY') return true;
+                                        const allowedOccasions = ALLOWED_OCCASIONS[formData.relation] || [];
+                                        return allowedOccasions.includes(key);
+                                    })
+                                    .map(([key, value]) => (
+                                        <MenuItem key={key} value={key}>{value}</MenuItem>
+                                    ))
                                 }
-                            }}
-                        >
-                            انصراف
-                        </Button>
+                            </Select>
+                        </FormControl>
+
+                        <TextField
+                            type="date"
+                            value={od.date}
+                            onChange={(e) => handleOccasionChange(index, 'date', e.target.value)}
+                            disabled={loading || (od.occasion === 'BIRTHDAY' && index === 0)}
+                            sx={{ flex: 1 }}
+                            InputLabelProps={{ shrink: true }}
+                        />
+
+                        {index > 0 && (
+                            <IconButton 
+                                onClick={() => removeOccasion(index)}
+                                disabled={loading || (od.occasion === 'BIRTHDAY' && index === 0)}
+                            >
+                                <DeleteIcon />
+                            </IconButton>
+                        )}
                     </Box>
+                ))}
+
+                <Button
+                    startIcon={<AddIcon />}
+                    onClick={addOccasion}
+                    disabled={loading || !formData.relation}
+                    sx={{ mt: 1, mb: 3 }}
+                >
+                    افزودن مناسبت
+                </Button>
+
+                <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        disabled={loading}
+                    >
+                        {loading ? 'در حال ذخیره...' : 'ذخیره'}
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={() => navigate('/friends')}
+                        fullWidth
+                        disabled={loading}
+                    >
+                        انصراف
+                    </Button>
                 </Box>
-            </Paper>
+            </form>
         </Box>
     );
 };

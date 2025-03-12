@@ -19,6 +19,7 @@ class OccasionType(str, Enum):
     SONS_DAY = "SONS_DAY"
     WEDDING_ANNIVERSARY = "WEDDING_ANNIVERSARY"
     ENGAGEMENT_ANNIVERSARY = "ENGAGEMENT_ANNIVERSARY"
+    STUDENTS_DAY = "STUDENTS_DAY"
 
 class OccasionDate(BaseModel):
     occasion: OccasionType

@@ -1,9 +1,14 @@
 import React from 'react';
 import { Container, Typography, Grid, Button, Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Home.css';
 import AuthService from '../services/AuthService';
+import { useAuth } from '../contexts/AuthContext';
+import PersianCalendar from '../components/PersianCalendar';
+import { ReactTyped } from 'react-typed';
+import CharityMarketplace from '../components/CharityMarketplace';
+import CharityAuction from '../components/CharityAuction';
 
 // Import icons
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -32,6 +37,24 @@ const pulsingHeartStyle = {
 
 const Home = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const handleStartClick = () => {
+    if (isAuthenticated) {
+      navigate('/friends');
+    } else {
+      navigate('/login');
+    }
+  };
+
+  const handleDateSelect = (date) => {
+    if (isAuthenticated) {
+      navigate('/friends/add', { state: { selectedDate: date } });
+    } else {
+      navigate('/login');
+    }
+  };
 
   const features = [
     {
@@ -56,77 +79,190 @@ const Home = () => {
     }
   ];
 
-  const isAuthenticated = AuthService.isAuthenticated();
-
   return (
     <div className="home-page">
       <Container maxWidth="lg">
-        <section className="hero-section" style={{ background: '#029f68' }}>
-          <Box className="logo-container">
-            <img src="/images/logo.png" alt="Bamaram Logo" className="logo-image" />
-          </Box>
-          <Typography variant="h3" component="h1" gutterBottom>
-            باسلام به هر بامرام
-          </Typography>
-          <Typography variant="h5" component="h2" 
-            sx={{ 
-              color: 'rgba(255, 255, 255, 0.9)',
-              marginBottom: 4,
-              maxWidth: '900px',
-              margin: '0 auto',
-              lineHeight: 1.8
+        <section className="hero-section" sx={{
+          background: 'linear-gradient(135deg, #f6fffe 0%, #e0f5f1 100%)',
+          borderRadius: '0 0 50px 50px',
+          padding: '10px 20px 20px',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <Box 
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '100%',
+              background: 'linear-gradient(45deg, rgba(254, 80, 0, 0.1) 0%, rgba(254, 102, 63, 0.05) 100%)',
+              zIndex: 0
+            }}
+          />
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            position: 'relative',
+            zIndex: 1,
+            mb: 1
+          }}>
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: { xs: 'center', md: 'flex-start' },
+              flex: 1,
+              order: { xs: 1, md: 1 },
+              mr: { xs: 0, md: 4 }
             }}>
-            بامرام یک پلتفرم هوشمند و نوآورانه است که برای یادآوری و مدیریت تاریخ‌های محبوبان زندگی شما طراحی شده است
-          </Typography>
-          <div className="cta-buttons">
-            {!isAuthenticated ? (
-              <Button
-                component={Link}
-                to="/login"
-                variant="contained"
-                size="large"
-                sx={{
-                  minWidth: '180px',
-                  fontSize: '1.1rem',
+              <Typography 
+                variant="h3" 
+                component="h1" 
+                gutterBottom 
+                sx={{ 
+                  color: '#FE5000 !important',
+                  position: 'relative',
+                  zIndex: 1,
                   fontWeight: 'bold',
-                  background: `linear-gradient(45deg, #fe663f 30%, #ff8568 90%)`,
-                  color: 'white',
-                  '&:hover': {
-                    background: `linear-gradient(45deg, #e55736 30%, #fe663f 90%)`,
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(254, 102, 63, 0.3)'
-                  },
-                  boxShadow: '0 4px 16px rgba(254, 102, 63, 0.2)',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                ورود به بامرام
-              </Button>
-            ) : (
-              <Button
-                component={Link}
-                to="/friends"
-                variant="contained"
-                size="large"
-                sx={{
-                  minWidth: '180px',
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  background: `linear-gradient(45deg, #fe663f 30%, #ff8568 90%)`,
-                  color: 'white',
-                  '&:hover': {
-                    background: `linear-gradient(45deg, #e55736 30%, #fe663f 90%)`,
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(254, 102, 63, 0.3)'
-                  },
-                  boxShadow: '0 4px 16px rgba(254, 102, 63, 0.2)',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                لیست محبوبان
-              </Button>
-            )}
-          </div>
+                  textAlign: { xs: 'center', md: 'right' },
+                  mb: 1,
+                  fontSize: { xs: '0.84rem', md: '1.05rem' }
+                }}>
+                باسلام به هر بامرام
+              </Typography>
+              
+              <Box sx={{
+                textAlign: { xs: 'center', md: 'right' },
+                color: '#2c665a',
+                direction: 'rtl',
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                flexWrap: 'nowrap'
+              }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontSize: { xs: '1.8rem', md: '2rem' },
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  ❤️ مرام بزار برای عزیزت ❤️
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontSize: { xs: '1.8rem', md: '2rem' },
+                    whiteSpace: 'nowrap',
+                    fontWeight: 'bold',
+                    '& .emoji': {
+                      fontSize: '1.3em',
+                      verticalAlign: 'middle',
+                      margin: '0 4px'
+                    }
+                  }}
+                >
+                  <ReactTyped
+                    strings={[
+                      'حتی با یک پیامک 📱',
+                      'با یک هدیه کوچک 🎁',
+                      'حتی با یک کارت پستال 💌'
+                    ]}
+                    typeSpeed={40}
+                    backSpeed={50}
+                    startDelay={1000}
+                    backDelay={2000}
+                    loop
+                  />
+                </Typography>
+              </Box>
+              
+              <Box sx={{ 
+                width: '100%', 
+                display: 'flex', 
+                justifyContent: 'flex-start', 
+                mt: '60px',
+                pl: '20px'
+              }}>
+                <div className="cta-buttons">
+                  {!isAuthenticated ? (
+                    <Button
+                      onClick={() => navigate('/login')}
+                      variant="contained"
+                      size="large"
+                      sx={{
+                        minWidth: '180px',
+                        fontSize: '1.1rem',
+                        fontWeight: 'bold',
+                        background: 'linear-gradient(45deg, #FE5000 30%, #fe663f 90%)',
+                        color: 'white',
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #fe663f 30%, #FE5000 90%)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 8px 24px rgba(254, 80, 0, 0.3)'
+                        },
+                        boxShadow: '0 4px 16px rgba(254, 80, 0, 0.2)',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      ورود به بامرام
+                    </Button>
+                  ) : (
+                    <Button
+                      component={Link}
+                      to="/friends"
+                      variant="contained"
+                      size="large"
+                      sx={{
+                        minWidth: '180px',
+                        fontSize: '1.1rem',
+                        fontWeight: 'bold',
+                        background: 'linear-gradient(45deg, #FE5000 30%, #fe663f 90%)',
+                        color: 'white',
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #fe663f 30%, #FE5000 90%)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 8px 24px rgba(254, 80, 0, 0.3)'
+                        },
+                        boxShadow: '0 4px 16px rgba(254, 80, 0, 0.2)',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      لیست محبوبان
+                    </Button>
+                  )}
+                </div>
+              </Box>
+            </Box>
+
+            <Box sx={{ 
+              width: '280px',
+              height: '280px',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              borderRadius: '20px',
+              padding: 2,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+              transition: 'transform 0.3s ease-in-out',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              order: { xs: 2, md: 2 },
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 48px rgba(0, 0, 0, 0.12)'
+              }
+            }}>
+              <PersianCalendar onDateSelect={handleDateSelect} />
+            </Box>
+          </Box>
         </section>
 
         <section className="features-section">
@@ -161,30 +297,33 @@ const Home = () => {
           </Grid>
         </section>
 
-        <div className="welcome-message">
-          <Typography variant="h4" component="h2" gutterBottom
-            sx={{
-              color: theme.palette.primary.main,
-              fontWeight: 'bold',
-              textAlign: 'center'
-            }}>
-            چرا بامرام؟
-          </Typography>
-          <Typography variant="body1" 
-            sx={{
-              color: theme.palette.text.secondary,
-              textAlign: 'center',
-              maxWidth: '900px',
-              margin: '0 auto',
-              mt: 2,
-              lineHeight: 2
-            }}>
-            با توجه به شلوغی‌های زندگی امروزی، بسیاری از افراد تاریخ‌های مهم را فراموش می‌کنند و یا فرصت مناسب برای خرید هدیه و خوشحال کردن خانواده خود پیدا نمی‌کنند. بامرام یک هفته قبل از هر مناسبت به شما یادآوری می‌کند و هدایای مناسب آن روز را از فروشگاه "باسلام"، به شما معرفی می‌کند. همچنین، بسته‌بندی‌های ویژه مناسبت‌ها را نیز فراهم می‌کنیم تا شما بتوانید به راحتی و بدون دغدغه هدایا را به صورت آنلاین خریداری کنید.
-          </Typography>
-        </div>
+        <CharityAuction />
+
+        <CharityMarketplace />
+
+        {/* تصویر انتهای صفحه */}
+        <Box
+          sx={{
+            mt: 8,
+            mb: 4,
+            display: 'flex',
+            justifyContent: 'center'
+          }}
+        >
+          <img
+            src="https://s6.uupload.ir/files/یییییییی_olm1.jpg"
+            alt="Bamaram Feature"
+            style={{
+              maxWidth: '90%',
+              height: 'auto',
+              borderRadius: '32px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+            }}
+          />
+        </Box>
       </Container>
     </div>
   );
 };
 
-export default Home; 
+export default Home;
