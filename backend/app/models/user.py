@@ -22,3 +22,13 @@ class User(Base):
     friends = relationship(
         "Friend", back_populates="user", cascade="all, delete-orphan"
     )
+
+    # رابطه با مزایده‌ها
+    auctions = relationship(
+        "Auction", back_populates="creator", cascade="all, delete-orphan"
+    )
+
+    # رابطه با پیشنهادها
+    bids = relationship(
+        "Bid", back_populates="user", cascade="all, delete-orphan"
+    )

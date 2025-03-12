@@ -31,7 +31,7 @@ class Gift(GiftBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class SentGiftBase(BaseModel):
@@ -49,7 +49,7 @@ class SentGift(SentGiftBase):
     sent_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class SentGiftWithDetails(BaseModel):
@@ -59,4 +59,4 @@ class SentGiftWithDetails(BaseModel):
     friend_name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True

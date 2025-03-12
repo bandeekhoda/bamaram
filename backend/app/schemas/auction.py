@@ -25,7 +25,7 @@ class Bid(BidBase):
     user_name: Optional[str] = None  # برای نمایش نام کاربر در لیست پیشنهادها
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class AuctionBase(BaseModel):
@@ -71,4 +71,4 @@ class Auction(AuctionBase):
     bids: List[Bid] = []
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 

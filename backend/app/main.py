@@ -4,13 +4,14 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from routers import users, auth, friend, gift, basalam, auction
 from database.database import engine
-from models import user, otp, friend as friend_model, gift as gift_model
+from models import user, otp, friend as friend_model, gift as gift_model, auction as auction_model
 
 # ایجاد جداول در دیتابیس
 user.Base.metadata.create_all(bind=engine)
 otp.Base.metadata.create_all(bind=engine)
 friend_model.Base.metadata.create_all(bind=engine)
 gift_model.Base.metadata.create_all(bind=engine)
+auction_model.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="بامرام API")
 
